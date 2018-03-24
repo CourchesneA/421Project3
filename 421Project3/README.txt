@@ -14,3 +14,10 @@ Application.java has the main class
 DatabaseConnection loads the driver and handles all the database calls
 All other classes are UI only, MainFrame being the main window. 
 
+Queries:
+Q1: Register a player into the database
+Q2: Announce the winner of a match and update the score of the winning team
+Q3: Get a list of the players of teams that takes part in the given tournament
+Q4: Update the date and location of a match
+Q5: Disqualify a team: Try to find a random team that plays the same game to replace
+the disqualified team in all of its matches, otherwise just remove the team's participation in matches
