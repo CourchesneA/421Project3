@@ -66,7 +66,7 @@ public class MainFrame extends JFrame {
 		getContentPane().add(alt4);
 		
 		getContentPane().add(Box.createVerticalGlue());
-		JButton alt5 = new JButton("Alternative 5");
+		JButton alt5 = new JButton("Disqualify team");
 		alt5.setAlignmentX(Component.CENTER_ALIGNMENT);
 		alt5.addActionListener(new ActionListener() {
 			@Override

@@ -200,6 +200,83 @@ public class DatabaseConnection{
 		}
 	}
 	
+
+	public static void disqualifyTeam(String teamname) {
+		String dialog = "Unexpected error";
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		PreparedStatement stmt2 = null;
+		int msgType = JOptionPane.INFORMATION_MESSAGE;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			//Get the game that the team plays and get a replacement team
+			//Replace the team for all matches
+			
+			// Statement 1: Find a new team to replace them (The team must play the same game)
+			stmt1 = connection.prepareStatement("SELECT teamname FROM teams WHERE gamename=(SELECT gamename FROM teams WHERE teamname=? LIMIT(1)) AND teamname IS DISTINCT FROM ? ORDER BY RANDOM() LIMIT(1)");
+			stmt1.setString(1, teamname);
+			stmt1.setString(2, teamname);
+			
+			ResultSet rs = stmt1.executeQuery();	
+			int result2 = -1;
+			
+			if(rs.next()) {
+				//Replacement team found
+				String replacementTeam = rs.getString("teamname");
+				stmt2 = connection.prepareStatement("UPDATE participation SET teamname=? WHERE teamname=?");
+				stmt2.setString(1, replacementTeam);
+				stmt2.setString(2, teamname);
+				result2 = stmt2.executeUpdate();
+				dialog = "The team was replaced by '"+replacementTeam+"' in "+result2+" matches";
+			}else {
+				//No replacement team found
+				stmt2 = connection.prepareStatement("DELETE FROM participation WHERE teamname=?");
+				stmt2.setString(1, teamname);
+				result2 = stmt2.executeUpdate();
+				if(result2 <=0) {
+					dialog = "No team were available to substitute but no matcch participation were found";
+				}else {
+					dialog = "No team were available to substitute but "+result2+" matches were cancelled";
+				}
+				msgType = JOptionPane.WARNING_MESSAGE;
+			}
+			
+			connection.close();
+			stmt1.close();
+			stmt2.close();
+		}catch(SQLException se) {
+			msgType = JOptionPane.ERROR_MESSAGE;
+			dialog = "SQL Error: "+se.getMessage();
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		         if(stmt2!=null)
+		        	 stmt2.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		      Application.mainframe.setEnabled(true);
+		      JOptionPane.showMessageDialog(Application.mainframe, dialog, "Registration result", msgType );
+		}
+		
+	}
+	
 	/**
 	 * Update the venue of a given match in the database
 	 * @param matchID
@@ -478,6 +555,7 @@ public class DatabaseConnection{
 		JOptionPane.showMessageDialog(Application.mainframe, "Unable to query database for a random building name", "Query error", JOptionPane.ERROR_MESSAGE );
 		return null;
 	}
+
 
 
 	
