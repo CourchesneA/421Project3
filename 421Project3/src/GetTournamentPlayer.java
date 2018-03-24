@@ -16,15 +16,15 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 
-public class RegistrationForm extends JFrame{
+public class GetTournamentPlayer extends JFrame{
 	
 	private static final long serialVersionUID = 1L;
 	private HashMap<String,JTextField> fields = new HashMap<String,JTextField>();
 
-	public RegistrationForm() {
+	public GetTournamentPlayer() {
 		int ypos = 0;
 		
-		setTitle("Register");
+		setTitle("Get tournament participants");
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		addWindowListener(new java.awt.event.WindowAdapter() {
 		    @Override
@@ -49,18 +49,16 @@ public class RegistrationForm extends JFrame{
 		mainPanel.setLayout(panelGridBagLayout);
 		
 		
-		addLabelAndTextField("Gamertag:",ypos++,mainPanel);
-		addLabelAndTextField("Date of birth:",ypos++,mainPanel);
-		addLabelAndTextField("Team name:",ypos++,mainPanel);
+		addLabelAndTextField("Tournament:",ypos++,mainPanel);
 		
 		
 		JButton rndButton = new JButton("RND");
 		rndButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String teamname = DatabaseConnection.getRandomTeam();
+				String teamname = DatabaseConnection.getRandomTournament();
 				if(teamname != null)
-					fields.get("Team name:").setText(teamname);
+					fields.get("Tournament:").setText(teamname);
 			}
 		});
 		GridBagConstraints c2 = new GridBagConstraints();
@@ -116,29 +114,14 @@ public class RegistrationForm extends JFrame{
 	}
 	
 	private void buttonSubmit() {
-		
-	    DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		String dob = fields.get("Date of birth:").getText();
-		
-		java.sql.Date date = null;
-		
-		try {
-			java.util.Date udate = format.parse(dob);
-			date = new java.sql.Date(udate.getTime());
-		}catch(ParseException pe) {
-		      JOptionPane.showMessageDialog(this, "Error parsing the date, please enter date in the format: "+format.format(new java.util.Date()), "Parsing error", JOptionPane.WARNING_MESSAGE );
-		      return;
-		}
 
-		
 		//Execute the SQL
-		String gamertag = fields.get("Gamertag:").getText();
-		String teamname = fields.get("Team name:").getText();
+		String tournamentname = fields.get("Tournament:").getText();
 		
 		System.out.println("Submitting query to database . . .");
 
 		this.dispose();
-		DatabaseConnection.registerPlayer(gamertag,date,teamname);
+		DatabaseConnection.getTournamentPlayers(tournamentname);
 		
 		
 	}

@@ -16,15 +16,15 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 
-public class RegistrationForm extends JFrame{
+public class UpdateVenue extends JFrame{
 	
 	private static final long serialVersionUID = 1L;
 	private HashMap<String,JTextField> fields = new HashMap<String,JTextField>();
 
-	public RegistrationForm() {
+	public UpdateVenue() {
 		int ypos = 0;
 		
-		setTitle("Register");
+		setTitle("Change venue");
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		addWindowListener(new java.awt.event.WindowAdapter() {
 		    @Override
@@ -49,18 +49,18 @@ public class RegistrationForm extends JFrame{
 		mainPanel.setLayout(panelGridBagLayout);
 		
 		
-		addLabelAndTextField("Gamertag:",ypos++,mainPanel);
-		addLabelAndTextField("Date of birth:",ypos++,mainPanel);
-		addLabelAndTextField("Team name:",ypos++,mainPanel);
-		
-		
+		addLabelAndTextField("Match ID:",ypos++,mainPanel);
+		addLabelAndTextField("Start date:",ypos++,mainPanel);
+		addLabelAndTextField("Expected duration:",ypos++,mainPanel);
+		addLabelAndTextField("Room number:",ypos++,mainPanel);
+		addLabelAndTextField("Building:",ypos++,mainPanel);
 		JButton rndButton = new JButton("RND");
 		rndButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String teamname = DatabaseConnection.getRandomTeam();
-				if(teamname != null)
-					fields.get("Team name:").setText(teamname);
+				String buildingname = DatabaseConnection.getRandomBuilding();
+				if(buildingname != null)
+					fields.get("Building:").setText(buildingname);
 			}
 		});
 		GridBagConstraints c2 = new GridBagConstraints();
@@ -68,14 +68,14 @@ public class RegistrationForm extends JFrame{
 		c2.gridx=2;
 		c2.gridy=ypos-1;
 		add(rndButton,c2);
-
+		
 		
 		
 		JButton btn = new JButton("Submit");
 		btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				buttonSubmit();
+				buttonAction();
 			}
 		});
 		GridBagConstraints btngbc = new GridBagConstraints();
@@ -115,15 +115,15 @@ public class RegistrationForm extends JFrame{
 	    
 	}
 	
-	private void buttonSubmit() {
+	private void buttonAction() {
 		
-	    DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		String dob = fields.get("Date of birth:").getText();
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		String startDate = fields.get("Start date:").getText();
 		
 		java.sql.Date date = null;
 		
 		try {
-			java.util.Date udate = format.parse(dob);
+			java.util.Date udate = format.parse(startDate);
 			date = new java.sql.Date(udate.getTime());
 		}catch(ParseException pe) {
 		      JOptionPane.showMessageDialog(this, "Error parsing the date, please enter date in the format: "+format.format(new java.util.Date()), "Parsing error", JOptionPane.WARNING_MESSAGE );
@@ -131,17 +131,54 @@ public class RegistrationForm extends JFrame{
 		}
 
 		
+		int matchID;
+		try {
+			matchID = Integer.parseInt(fields.get("Match ID:").getText());
+			if(matchID < 1) {
+				throw new NumberFormatException();
+			}
+		}catch(NumberFormatException pe) {
+		      JOptionPane.showMessageDialog(this, "Error parsing the match ID, please enter a valid number","Input format error", JOptionPane.WARNING_MESSAGE );
+		      return;
+		}
+		
+		int expDuration;
+		try {
+			expDuration = Integer.parseInt(fields.get("Expected duration:").getText());
+			if(expDuration < 1) {
+				throw new NumberFormatException();
+			}
+		}catch(NumberFormatException pe) {
+		      JOptionPane.showMessageDialog(this, "Error parsing the expected duration, please enter a valid number","Input format error", JOptionPane.WARNING_MESSAGE );
+		      return;
+		}
+		
+		
+		int roomnb;
+		try {
+			roomnb = Integer.parseInt(fields.get("Room number:").getText());
+			if(roomnb < 1) {
+				throw new NumberFormatException();
+			}
+		}catch(NumberFormatException pe) {
+		      JOptionPane.showMessageDialog(this, "Error parsing the room number, please enter a valid number","Input format error", JOptionPane.WARNING_MESSAGE );
+		      return;
+		}
+		
+		
 		//Execute the SQL
-		String gamertag = fields.get("Gamertag:").getText();
-		String teamname = fields.get("Team name:").getText();
+		
+		String building = fields.get("Building:").getText();
 		
 		System.out.println("Submitting query to database . . .");
 
 		this.dispose();
-		DatabaseConnection.registerPlayer(gamertag,date,teamname);
+		DatabaseConnection.updateVenue(matchID,date,expDuration,roomnb,building);
 		
 		
 	}
+	
+	
 	
 
 }

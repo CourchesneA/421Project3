@@ -1,6 +1,9 @@
 
+import java.awt.List;
 import java.sql.*;
+import java.util.ArrayList;
 
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 public class DatabaseConnection{
 	private static String uri = "jdbc:postgresql://comp421.cs.mcgill.ca:5432/cs421";
@@ -65,8 +68,10 @@ public class DatabaseConnection{
 		
 	}
 	
-	
-public static void listPlayers() {
+	/**
+	 * @deprecated TEST query
+	 */
+	public static void listPlayers() {
 		
 		String dialog = "Unexpected error";
 		Connection connection = null;
@@ -123,6 +128,358 @@ public static void listPlayers() {
 		}
 		
 	}
+
+	public static void announceWinner(int matchID, String teamname) {
+
+		String dialog = "Unexpected error";
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		PreparedStatement stmt2 = null;
+		final int matchPointValue=100;
+		int msgType = JOptionPane.INFORMATION_MESSAGE;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			// Statement 1: Update match.winner
+			stmt1 = connection.prepareStatement("UPDATE matches SET winner=? WHERE matchid=? AND winner IS DISTINCT FROM ?");
+			stmt1.setString(1, teamname);
+			stmt1.setInt(2, matchID);
+			stmt1.setString(3, teamname);
+			stmt2 = connection.prepareStatement("UPDATE teams SET teamscore=teamscore+? WHERE teamname=?");
+			stmt2.setInt(1, matchPointValue);
+			stmt2.setString(2, teamname);
+			int result = stmt1.executeUpdate();
+			int result2 = -1;
+			
+			if(result ==1) {
+				//Match was updated, also update the score of the team
+				System.out.println("Q1 succeeded");
+				result2 = stmt2.executeUpdate();
+				System.out.println("nb of result: "+result2);
+				if(result2 == 1) {
+					dialog = "Successfully modified match winner and team score";
+				}else {
+					dialog = "Successfully modified match winner but no team score was updated";
+				}
+			}else {
+				dialog = "Error, Query succeeded but match was modified in the database";
+				msgType = JOptionPane.WARNING_MESSAGE;
+			}
+			
+			connection.close();
+			stmt1.close();
+			stmt2.close();
+		}catch(SQLException se) {
+			msgType = JOptionPane.ERROR_MESSAGE;
+			dialog = "SQL Error: "+se.getMessage();
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		         if(stmt2!=null)
+		        	 stmt2.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		      Application.mainframe.setEnabled(true);
+		      JOptionPane.showMessageDialog(Application.mainframe, dialog, "Registration result", msgType );
+		}
+	}
+	
+	/**
+	 * Update the venue of a given match in the database
+	 * @param matchID
+	 * @param startDate
+	 * @param expDuration
+	 * @param roomnb
+	 * @param buildingname
+	 */
+	public static void updateVenue(int matchID, Date startDate, int expDuration, int roomnb, String buildingname) {
+		String dialog = "Unexpected error";
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		int msgType = JOptionPane.INFORMATION_MESSAGE;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			// Statement 1: Update match.winner
+			stmt1 = connection.prepareStatement("UPDATE matches SET start=?, roomnb=?, bname=?, expdur=? WHERE matchid=?");
+			stmt1.setDate(1, startDate);
+			stmt1.setInt(2, roomnb);
+			stmt1.setString(3, buildingname);
+			stmt1.setInt(4, expDuration);
+			stmt1.setInt(5, matchID);
+			int result = stmt1.executeUpdate();
+			
+			if(result ==1) {
+				//Match was updated, also update the score of the team
+				System.out.println("Q1 succeeded");
+				
+				dialog = "Successfully modified match venue";
+			}else {
+				dialog = "Error, Query succeeded but no match was modified in the database";
+				msgType = JOptionPane.WARNING_MESSAGE;
+			}
+			
+			connection.close();
+			stmt1.close();
+		}catch(SQLException se) {
+			msgType = JOptionPane.ERROR_MESSAGE;
+			dialog = "SQL Error: "+se.getMessage();
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		      Application.mainframe.setEnabled(true);
+		      JOptionPane.showMessageDialog(Application.mainframe, dialog, "Registration result", msgType );
+		}
+		
+	}
+	
+	public static void getTournamentPlayers(String tournamentname){
+		
+		JList<String> players;
+		String dialog = "Unexpected error";
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		int msgType = JOptionPane.INFORMATION_MESSAGE;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			
+			//TEST query
+			String sql = "SELECT DISTINCT gamertag FROM players,participation WHERE participation.teamname=players.teamname AND participation.matchid IN (SELECT matches.matchid FROM matches,tournaments WHERE tournaments.tournamentname=matches.tournamentname AND tournaments.tournamentname=?)";
+			stmt = connection.prepareStatement(sql);
+			stmt.setString(1, tournamentname);
+
+			ResultSet rs = stmt.executeQuery();
+			
+			ArrayList<String> al = new ArrayList<String>();
+			while(rs.next()) {
+				String gt = rs.getString("gamertag");
+				al.add(gt);
+				
+		        if(rs.getRow() > 100) break;	//Set max to 100 to prevent overflow
+			}
+			players = new JList<String>(al.toArray(new String[al.size()]));
+			
+			rs.close();
+			connection.close();
+			stmt.close();
+			if(!al.isEmpty()) {
+				ListDisplayer display = new ListDisplayer(players);
+				display.setVisible(true);
+				return;
+			}else {
+				dialog="No player registered in this tournament";
+				msgType = JOptionPane.WARNING_MESSAGE;
+			}
+			
+		}catch(SQLException se) {
+			msgType = JOptionPane.ERROR_MESSAGE;
+			dialog = "SQL Error: "+se.getMessage();
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt!=null)
+		            stmt.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		      Application.mainframe.setEnabled(true);
+		}
+	    JOptionPane.showMessageDialog(Application.mainframe, dialog, "Registration result", msgType );
+		
+	}
+	
+	public static String getRandomTeam() {
+		
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			stmt1 = connection.prepareStatement("SELECT teamname FROM teams ORDER BY RANDOM() LIMIT(1)");
+			ResultSet rs = stmt1.executeQuery();
+			
+			String teamname = null;
+			rs.next();
+			if(rs != null) {
+				teamname = rs.getString("teamname");
+			}
+			
+			if(teamname != null) {
+				return teamname;
+			}
+			
+			connection.close();
+			stmt1.close();
+		}catch(SQLException se) {
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		}
+		JOptionPane.showMessageDialog(Application.mainframe, "Unable to query database for a random tournament name", "Query error", JOptionPane.ERROR_MESSAGE );
+		return null;
+	}
+	
+	public static String getRandomTournament() {
+		
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			stmt1 = connection.prepareStatement("SELECT tournamentname FROM tournaments ORDER BY RANDOM() LIMIT(1)");
+			ResultSet rs = stmt1.executeQuery();
+			
+			String tournamentname = null;
+			rs.next();
+			if(rs != null) {
+				tournamentname = rs.getString("tournamentname");
+			}
+			
+			if(tournamentname != null) {
+				return tournamentname;
+			}
+			
+			connection.close();
+			stmt1.close();
+		}catch(SQLException se) {
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		}
+		JOptionPane.showMessageDialog(Application.mainframe, "Unable to query database for a random tournament name", "Query error", JOptionPane.ERROR_MESSAGE );
+		return null;
+	}
+	
+	public static String getRandomBuilding() {
+		
+		Connection connection = null;
+		PreparedStatement stmt1 = null;
+		
+		try {
+			connection = DriverManager.getConnection(uri,user,pw);
+			
+			stmt1 = connection.prepareStatement("SELECT buildingname FROM buildings ORDER BY RANDOM() LIMIT(1)");
+			ResultSet rs = stmt1.executeQuery();
+			
+			String buildingname = null;
+			rs.next();
+			if(rs != null) {
+				buildingname = rs.getString("buildingname");
+			}
+			
+			if(buildingname != null) {
+				return buildingname;
+			}
+			
+			connection.close();
+			stmt1.close();
+		}catch(SQLException se) {
+			System.out.println("Error msg: "+se.getMessage());
+			System.out.println("State: "+se.getSQLState());
+
+
+		}catch(Exception e) {
+			System.out.println("Unexpected error occured: ");
+			e.printStackTrace();
+			
+		}finally {
+			 try{
+		         if(stmt1!=null)
+		            stmt1.close();
+		      }catch(SQLException se2){
+		      }// nothing we can do
+		      try{
+		         if(connection!=null)
+		            connection.close();
+		      }catch(SQLException se){
+		         se.printStackTrace();
+		      }//end finally try
+		}
+		JOptionPane.showMessageDialog(Application.mainframe, "Unable to query database for a random building name", "Query error", JOptionPane.ERROR_MESSAGE );
+		return null;
+	}
+
+
 	
 	
 }

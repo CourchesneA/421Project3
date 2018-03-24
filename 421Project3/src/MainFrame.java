@@ -33,7 +33,7 @@ public class MainFrame extends JFrame {
 		getContentPane().add(alt1);
 
 		getContentPane().add(Box.createVerticalGlue());
-		JButton alt2 = new JButton("Alternative 2");
+		JButton alt2 = new JButton("Announce match winner");
 		alt2.setAlignmentX(Component.CENTER_ALIGNMENT);
 		alt2.addActionListener(new ActionListener() {
 			@Override
@@ -44,7 +44,7 @@ public class MainFrame extends JFrame {
 		getContentPane().add(alt2);
 		
 		getContentPane().add(Box.createVerticalGlue());
-		JButton alt3 = new JButton("Alternative 3");
+		JButton alt3 = new JButton("Get tournament players");
 		alt3.setAlignmentX(Component.CENTER_ALIGNMENT);
 		alt3.addActionListener(new ActionListener() {
 			@Override
@@ -55,7 +55,7 @@ public class MainFrame extends JFrame {
 		getContentPane().add(alt3);
 		
 		getContentPane().add(Box.createVerticalGlue());
-		JButton alt4 = new JButton("Alternative 4");
+		JButton alt4 = new JButton("Update match venue");
 		alt4.setAlignmentX(Component.CENTER_ALIGNMENT);
 		alt4.addActionListener(new ActionListener() {
 			@Override
@@ -96,7 +96,9 @@ public class MainFrame extends JFrame {
 	 * @Description: Set match.winner, update the team's score and update all the players score
 	 */
 	private void alternative2() {
-		
+		this.setEnabled(false);
+		AnnounceMatchWinner form = new AnnounceMatchWinner();
+		form.setVisible(true);
 	}
 	
 	/**
@@ -105,7 +107,9 @@ public class MainFrame extends JFrame {
 	 * @Description: List all players that plays in a team that has a match in the given tournament
 	 */
 	private void alternative3() {
-		
+		this.setEnabled(false);
+		GetTournamentPlayer form = new GetTournamentPlayer();
+		form.setVisible(true);
 	}
 	
 	/**
@@ -114,10 +118,20 @@ public class MainFrame extends JFrame {
 	 * @Description: Change the start time of a match and the location relation
 	 */
 	private void alternative4() {
-		
+		this.setEnabled(false);
+		UpdateVenue form = new UpdateVenue();
+		form.setVisible(true);
 	}
 	
+	/**
+	 * DISQUALIFY TEAM
+	 * @Description: Remove team from match and replace with another team that is not taking part in the match and is playing the same game
+	 */
 	private void alternative5() {
-		
+		this.setEnabled(false);
+		DisqualifyTeam form = new DisqualifyTeam();
+		form.setVisible(true);
 	}
+	
+	
 }

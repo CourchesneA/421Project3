@@ -12,6 +12,7 @@ public class Application {
 			System.exit(-1);
 		}
 		mainframe= new MainFrame();
+		mainframe.setAutoRequestFocus(true);
 		mainframe.setVisible(true);
 		
 	}

@@ -5,9 +5,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 import javax.swing.*;
@@ -16,15 +13,15 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 
-public class RegistrationForm extends JFrame{
+public class AnnounceMatchWinner extends JFrame{
 	
 	private static final long serialVersionUID = 1L;
 	private HashMap<String,JTextField> fields = new HashMap<String,JTextField>();
 
-	public RegistrationForm() {
+	public AnnounceMatchWinner() {
 		int ypos = 0;
 		
-		setTitle("Register");
+		setTitle("Announce Winner");
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		addWindowListener(new java.awt.event.WindowAdapter() {
 		    @Override
@@ -49,18 +46,15 @@ public class RegistrationForm extends JFrame{
 		mainPanel.setLayout(panelGridBagLayout);
 		
 		
-		addLabelAndTextField("Gamertag:",ypos++,mainPanel);
-		addLabelAndTextField("Date of birth:",ypos++,mainPanel);
-		addLabelAndTextField("Team name:",ypos++,mainPanel);
-		
-		
+		addLabelAndTextField("Match ID:",ypos++,mainPanel);
+		addLabelAndTextField("Winning team:",ypos++,mainPanel);
 		JButton rndButton = new JButton("RND");
 		rndButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String teamname = DatabaseConnection.getRandomTeam();
 				if(teamname != null)
-					fields.get("Team name:").setText(teamname);
+					fields.get("Winning team:").setText(teamname);
 			}
 		});
 		GridBagConstraints c2 = new GridBagConstraints();
@@ -68,14 +62,12 @@ public class RegistrationForm extends JFrame{
 		c2.gridx=2;
 		c2.gridy=ypos-1;
 		add(rndButton,c2);
-
-		
 		
 		JButton btn = new JButton("Submit");
 		btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				buttonSubmit();
+				buttonAction();
 			}
 		});
 		GridBagConstraints btngbc = new GridBagConstraints();
@@ -115,33 +107,28 @@ public class RegistrationForm extends JFrame{
 	    
 	}
 	
-	private void buttonSubmit() {
+	private void buttonAction() {
 		
-	    DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-		String dob = fields.get("Date of birth:").getText();
 		
-		java.sql.Date date = null;
-		
+		int matchID;
 		try {
-			java.util.Date udate = format.parse(dob);
-			date = new java.sql.Date(udate.getTime());
-		}catch(ParseException pe) {
-		      JOptionPane.showMessageDialog(this, "Error parsing the date, please enter date in the format: "+format.format(new java.util.Date()), "Parsing error", JOptionPane.WARNING_MESSAGE );
+			matchID = Integer.parseInt(fields.get("Match ID:").getText());
+			if(matchID < 1) {
+				throw new NumberFormatException();
+			}
+		}catch(NumberFormatException pe) {
+		      JOptionPane.showMessageDialog(this, "Error parsing the match ID, please enter a valid number","Input format error", JOptionPane.WARNING_MESSAGE );
 		      return;
 		}
 
-		
 		//Execute the SQL
-		String gamertag = fields.get("Gamertag:").getText();
-		String teamname = fields.get("Team name:").getText();
+		String teamname = fields.get("Winning team:").getText();
 		
 		System.out.println("Submitting query to database . . .");
 
 		this.dispose();
-		DatabaseConnection.registerPlayer(gamertag,date,teamname);
+		DatabaseConnection.announceWinner(matchID,teamname);
 		
 		
 	}
-	
-
 }
